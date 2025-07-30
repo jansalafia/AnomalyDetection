@@ -1,11 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import time
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 
+#Start Timer
+start_time = time.perf_counter()
 
 #Load the dataset
 dataframe = pd.read_csv('OPSAT-AD_modified.csv')
@@ -25,7 +28,7 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 
 
 #Model Building (Logistic Regression) with increased iterations
-LogReg = LogisticRegression(max_iter=1000, random_state=100)
+LogReg = LogisticRegression(max_iter=100000, random_state=100)
 LogReg.fit(x_train, y_train)
 
 #Applying model to make a prediction
@@ -34,12 +37,12 @@ y_LogReg_test_pred = LogReg.predict(x_test)
 
 
 
-# #Model Evaluation
-# print("Model Performance:")
-# print("Training Set Performance:")
-# print(classification_report(y_train, y_LogReg_train_pred))
-# print("Test Set Performance:")
-# print(classification_report(y_test, y_LogReg_test_pred))
+#Model Evaluation
+print("Model Performance:")
+print("Training Set Performance:")
+print(classification_report(y_train, y_LogReg_train_pred))
+print("Test Set Performance:")
+print(classification_report(y_test, y_LogReg_test_pred))
 
 # Create visualization plots
 plt.figure(figsize=(15, 10))
@@ -80,6 +83,13 @@ plt.xlabel('False Positive Rate')
 plt.ylabel('True Positive Rate')
 plt.title('ROC Curve')
 plt.legend()
-
 plt.tight_layout()
+
+
+# Timer
+end_time = time.perf_counter()
+elapsed_time = end_time - start_time
+print(f"Task executed in: {elapsed_time:.5f} seconds")
+
 plt.show()
+
