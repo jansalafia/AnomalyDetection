@@ -7,9 +7,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 
-#Start Timer
-start_time = time.perf_counter()
-
 #Load the dataset
 dataframe = pd.read_csv('OPSAT-AD_modified.csv')
 
@@ -48,34 +45,16 @@ print(classification_report(y_test, y_LogReg_test_pred))
 plt.figure(figsize=(15, 10))
 
 #Confusion Matrix Heatmap
-plt.subplot(2, 2, 1)
+plt.subplot(2, 1, 1)
 cm = confusion_matrix(y_test, y_LogReg_test_pred)
 sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
 plt.title('Confusion Matrix')
 plt.ylabel('True Label')
 plt.xlabel('Predicted Label')
 
-#Feature Importance Plot
-plt.subplot(2, 2, 2)
-importance = pd.DataFrame({
-    'Feature': x.columns,
-    'Importance': abs(LogReg.coef_[0])
-})
-importance = importance.sort_values('Importance', ascending=False)
-sns.barplot(data=importance.head(10), x='Importance', y='Feature')
-plt.title('Top 10 Feature Importance')
-plt.xlabel('Absolute Coefficient Value')
-
-#Distribution of Predictions
-plt.subplot(2, 2, 3)
-sns.histplot(data=pd.DataFrame({
-    'True': y_test,
-    'Predicted': y_LogReg_test_pred
-}).melt(), x='value', hue='variable')
-plt.title('Distribution of True vs Predicted Values')
 
 #ROC Curve
-plt.subplot(2, 2, 4)
+plt.subplot(2, 1, 2)
 fpr, tpr, _ = roc_curve(y_test, LogReg.predict_proba(x_test)[:,1])
 plt.plot(fpr, tpr, label=f'ROC curve (AUC = {auc(fpr, tpr):.2f})')
 plt.plot([0, 1], [0, 1], 'k--')
@@ -85,11 +64,6 @@ plt.title('ROC Curve')
 plt.legend()
 plt.tight_layout()
 
-
-# Timer
-end_time = time.perf_counter()
-elapsed_time = end_time - start_time
-print(f"Task executed in: {elapsed_time:.5f} seconds")
 
 plt.show()
 
