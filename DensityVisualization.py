@@ -6,7 +6,7 @@ df = pd.read_csv("OPSAT-AD_modified.csv")
 
 # Define key features to visualize
 key_features = [
-    'mean', 'var', 'std', 'kurtosis', 'skew',
+    'mean', 'var', 'kurtosis', 'skew',
     'n_peaks', 'diff_peaks', 'diff2_peaks', 'gaps_squared', 'var_div_duration'
 ]
 
@@ -21,6 +21,7 @@ for i, feature in enumerate(key_features):
     plt.xlabel(feature)
     plt.ylabel('Density')
     plt.legend()
+
 
 plt.tight_layout()
 plt.show()
