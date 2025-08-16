@@ -4,6 +4,8 @@ import dash
 from dash import dcc, html
 import os
 
+
+print("Hello World")
 # === File paths ===
 input_folder = "ToBeMerged"
 output_folder = "Output"
