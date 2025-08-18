@@ -14,11 +14,11 @@ output_folder = "Output"
 os.makedirs(output_folder, exist_ok=True)
 
 # Input files
-file_summary = os.path.join(input_folder, "dataset.csv")
-file_segments = os.path.join(input_folder, "segments.csv")
+file_summary = os.path.join(input_folder, "CSVs\ToBeMerged\dataset.csv")
+file_segments = os.path.join(input_folder, "CSVs\ToBeMerged\segments.csv")
 
 # Output merged file
-output_file = os.path.join(output_folder, "merged_OPSSAT_segments.csv")
+output_file = os.path.join(output_folder, "CSVs\Output\merged_OPSSAT_segments.csv")
 
 # === Load datasets ===
 df_summary = pd.read_csv(file_summary)

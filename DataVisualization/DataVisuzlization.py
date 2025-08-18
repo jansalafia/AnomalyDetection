@@ -4,7 +4,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 
 # Load the data
-df = pd.read_csv("OPSAT-AD_modified.csv")
+df = pd.read_csv("CSVs\OPSAT-AD_modified.csv")
 
 
 # Create output directory
