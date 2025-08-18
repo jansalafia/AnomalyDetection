@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the dataset (ensure the CSV file is in the same directory or adjust the path)
-df = pd.read_csv("OPSAT-AD_modified.csv")
+df = pd.read_csv("CSVs\OPSAT-AD_modified.csv")
 
 # Define key features to visualize
 key_features = [

@@ -8,7 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 
 #Load the dataset
-dataframe = pd.read_csv('OPSAT-AD_modified.csv')
+dataframe = pd.read_csv('CSVs\OPSAT-AD_modified.csv')
 
 
 #Data Preperation

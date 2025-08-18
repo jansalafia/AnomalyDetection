@@ -3,9 +3,9 @@ import plotly.graph_objects as go
 import dash
 from dash import dcc, html
 import os
+import time
 
 
-print("Hello World")
 # === File paths ===
 input_folder = "ToBeMerged"
 output_folder = "Output"
