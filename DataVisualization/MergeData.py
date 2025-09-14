@@ -26,9 +26,9 @@ df_segments = pd.read_csv(file_segments)
 
 # === Merge datasets ===
 merged_df = pd.merge(
-    df_segments, #Only foucus on value and timestamp
-    df_summary,
-    on=["segment", "channel", "anomaly", "train", "sampling"], # TODO merge based on samples and channel
+    df_segments,
+    df_summary.drop(columns=["timestamp", "value"], errors="ignore"), # remove columns not at segment level
+    on=["segment", "channel"],
     how="left"
 )
 
