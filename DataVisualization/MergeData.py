@@ -25,15 +25,22 @@ df_summary = pd.read_csv(file_summary)
 df_segments = pd.read_csv(file_segments)
 
 # === Merge datasets ===
+# Merge segment stats into each timestamped reading
 merged_df = pd.merge(
     df_segments,
-    df_summary.drop(columns=["timestamp", "value"], errors="ignore"), # remove columns not at segment level
+    df_summary.drop(columns=["anomaly","train","sampling"], errors="ignore"),
     on=["segment", "channel"],
     how="left"
 )
 
 # Convert timestamps to datetime
 merged_df["timestamp"] = pd.to_datetime(merged_df["timestamp"])
+
+# ✅ Use the numeric anomaly flag from segments.csv
+merged_df["anomaly"] = merged_df["anomaly"].astype(int)
+
+# Maybe necessary: drop the confusing text label but for now we will keep for reference
+# merged_df.drop(columns=["label"], inplace=True)
 
 # === Save merged dataset ===
 merged_df.to_csv(output_file, index=False)
