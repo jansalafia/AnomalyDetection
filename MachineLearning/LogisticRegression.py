@@ -70,4 +70,4 @@ def do_model(path: str, graph: bool = False):
     
 
 do_model('CSVs/OPSAT-AD_modified.csv')
-do_model('CSVs/Output/merged_OPSSAT_segments.csv', verbose=True)
+do_model('CSVs/Output/merged_OPSSAT_segments.csv', graph=True)

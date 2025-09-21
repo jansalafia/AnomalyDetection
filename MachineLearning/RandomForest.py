@@ -8,12 +8,12 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_curve, 
 from sklearn.ensemble import RandomForestClassifier
 
 #Load the dataset
-dataframe = pd.read_csv('CSVs\OPSAT-AD_modified.csv')
+dataframe = pd.read_csv('CSVs/Output/merged_OPSSAT_segments.csv')
 
 
 #Data Preperation
 y = dataframe['anomaly']
-x = dataframe.drop(['anomaly'], axis=1)
+x = dataframe.drop(['anomaly', 'timestamp', 'channel', 'label'], axis=1, errors='ignore')
 
 # Scale the features
 scaler = StandardScaler()
@@ -27,6 +27,7 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random
 #Model Building (Random Forest)
 RandomForest = RandomForestClassifier(random_state=100)
 RandomForest.fit(x_train, y_train)
+RandomForest.feature_importances_
 
 #Applying model to make a prediction
 y_RandomForest_train_pred = RandomForest.predict(x_train)
