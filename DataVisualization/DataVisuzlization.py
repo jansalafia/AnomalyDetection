@@ -61,7 +61,7 @@ if 'PCA1' in df.columns and 'PCA2' in df.columns:
                          labels={"PCA1": "Principal Component 1", "PCA2": "Principal Component 2"},
                          color_continuous_scale=["blue", "red"])
 
-# Tab 3: Per-column scatter plots
+# Columns for dropdowns
 column_options = [col for col in features.columns]
 
 def make_column_plot(col):
@@ -69,6 +69,12 @@ def make_column_plot(col):
                       title=f"Scatter of {col} by Anomaly",
                       labels={"index": "Index", col: col},
                       color_continuous_scale=["blue", "red"])
+
+def make_box_plot(col):
+    return px.box(df, x="anomaly", y=col, color="anomaly",
+                  title=f"Box Plot of {col} by Anomaly",
+                  labels={"anomaly": "Anomaly", col: col},
+                  color_discrete_map={0: "blue", 1: "red"})
 
 app.layout = html.Div([
     html.H1("OPSSAT Anomaly Explorer"),
@@ -82,7 +88,7 @@ app.layout = html.Div([
             dcc.Graph(figure=pca_fig) if pca_fig else html.Div("No PCA available")
         ]),
 
-        dcc.Tab(label="Per-Column Distributions", children=[
+        dcc.Tab(label="Per-Column Scatter", children=[
             html.Label("Select Column:"),
             dcc.Dropdown(
                 id="column-dropdown",
@@ -92,15 +98,29 @@ app.layout = html.Div([
             ),
             html.Div(id="column-description", style={"marginTop": "10px", "fontStyle": "italic"}),
             dcc.Graph(id="column-graph")
+        ]),
+
+        # NEW TAB: Box Plot
+        dcc.Tab(label="Per-Column Box Plot", children=[
+            html.Label("Select Column for Box Plot:"),
+            dcc.Dropdown(
+                id="box-dropdown",
+                options=[{"label": c, "value": c} for c in column_options],
+                value=column_options[0] if column_options else None,
+                clearable=False
+            ),
+            dcc.Graph(id="box-graph")
         ])
     ])
 ])
 
 # === Callbacks ===
+from dash.dependencies import Output, Input
+
 @app.callback(
-    [dash.dependencies.Output("column-graph", "figure"),
-     dash.dependencies.Output("column-description", "children")],
-    [dash.dependencies.Input("column-dropdown", "value")]
+    [Output("column-graph", "figure"),
+     Output("column-description", "children")],
+    [Input("column-dropdown", "value")]
 )
 def update_column_plot(selected_col):
     if selected_col:
@@ -108,6 +128,15 @@ def update_column_plot(selected_col):
         description = column_descriptions.get(selected_col, "No description available for this column.")
         return fig, description
     return {}, ""
+
+@app.callback(
+    Output("box-graph", "figure"),
+    [Input("box-dropdown", "value")]
+)
+def update_box_plot(selected_col):
+    if selected_col:
+        return make_box_plot(selected_col)
+    return {}
 
 if __name__ == "__main__":
     app.run(debug=True)
