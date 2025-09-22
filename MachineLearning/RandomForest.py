@@ -6,7 +6,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 
-def do_model(path: str, graph: bool = False, show_importance: bool = True):
+def do_model(path: str, 
+             graph: bool = False, 
+             show_importance: bool = True):
 	"""
 	Train Random Forest on `path`, print metrics, and (optionally) show feature importance.
 
@@ -96,6 +98,6 @@ def do_model(path: str, graph: bool = False, show_importance: bool = True):
 
 	return feat_imp
 
-# === Example usage ===
-do_model("CSVs/Output/merged_OPSSAT_segments.csv", graph=False, show_importance=True)
+# Example usage:
+do_model("CSVs\OPSAT-AD_modified.csv", graph=False, show_importance=True)
 
