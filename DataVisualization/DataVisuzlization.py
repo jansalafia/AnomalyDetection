@@ -79,15 +79,21 @@ def make_box_plot(col):
 app.layout = html.Div([
     html.H1("OPSSAT Anomaly Explorer"),
 
+
+    #Anomaly Overview Tab
     dcc.Tabs([
         dcc.Tab(label="Anomaly Overview", children=[
             dcc.Graph(figure=anomaly_fig),
         ]),
 
+
+        #PCA Scatter Plot
         dcc.Tab(label="PCA Visualization", children=[
             dcc.Graph(figure=pca_fig) if pca_fig else html.Div("No PCA available")
         ]),
 
+
+        #Per Column Scatter Plot
         dcc.Tab(label="Per-Column Scatter", children=[
             html.Label("Select Column:"),
             dcc.Dropdown(
@@ -100,7 +106,7 @@ app.layout = html.Div([
             dcc.Graph(id="column-graph")
         ]),
 
-        # NEW TAB: Box Plot
+        #Box Plot
         dcc.Tab(label="Per-Column Box Plot", children=[
             html.Label("Select Column for Box Plot:"),
             dcc.Dropdown(
