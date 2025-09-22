@@ -1,68 +1,101 @@
+
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import time
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report, confusion_matrix, roc_curve, auc
 
-#Load the dataset
-dataframe = pd.read_csv('CSVs/Output/merged_OPSSAT_segments.csv')
+def do_model(path: str, graph: bool = False, show_importance: bool = True):
+	"""
+	Train Random Forest on `path`, print metrics, and (optionally) show feature importance.
 
+	Feature importance views:
+	  - Raw:      signed (can be negative for some RF variants, but usually positive)
+	  - Absolute: absolute magnitude (strength of effect)
 
-#Data Preperation
-y = dataframe['anomaly']
-x = dataframe.drop(['anomaly', 'timestamp', 'channel', 'label'], axis=1, errors='ignore')
+	Returns:
+	  feat_imp (pd.DataFrame) if show_importance else None
+	"""
+	# 1) Load
+	df = pd.read_csv(path)
 
-# Scale the features
-scaler = StandardScaler()
-x_scaled = scaler.fit_transform(x)
-x = pd.DataFrame(x_scaled, columns=x.columns)
+	# 2) Prepare X, y
+	y = df['anomaly']
+	X = df.drop(columns=['anomaly', 'timestamp', 'channel', 'label'], errors='ignore')
 
-#Data Splitting
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.20, random_state=100)
+	# # 3) Standardize (optional for RF, but keeps parity with LR)
+	# scaler = StandardScaler()
+	# X_scaled = scaler.fit_transform(X)
+	# X = pd.DataFrame(X_scaled, columns=X.columns)
 
+	# 4) Split
+	X_train, X_test, y_train, y_test = train_test_split(
+		X, y, test_size=0.2, random_state=100, stratify=y if len(y.unique()) == 2 else None
+	)
 
-#Model Building (Random Forest)
-RandomForest = RandomForestClassifier(random_state=100)
-RandomForest.fit(x_train, y_train)
-RandomForest.feature_importances_
+	# 5) Model
+	rf = RandomForestClassifier(random_state=100)
+	rf.fit(X_train, y_train)
 
-#Applying model to make a prediction
-y_RandomForest_train_pred = RandomForest.predict(x_train)
-y_RandomForest_test_pred = RandomForest.predict(x_test)
+	# 6) Evaluate
+	y_pred_train = rf.predict(X_train)
+	y_pred_test  = rf.predict(X_test)
 
+	print("Model Performance:")
+	print("Training Set Performance:")
+	print(classification_report(y_train, y_pred_train))
+	print("Test Set Performance:")
+	print(classification_report(y_test, y_pred_test))
 
+	# 7) Optional confusion matrix + ROC
+	if graph:
+		from sklearn.metrics import ConfusionMatrixDisplay
+		disp = ConfusionMatrixDisplay.from_predictions(y_test, y_pred_test)
+		disp.ax_.set_title("Confusion Matrix")
+		plt.tight_layout()
+		plt.show()
 
-#Model Evaluation
-print("Model Performance:")
-print("Training Set Performance:")
-print(classification_report(y_train, y_RandomForest_train_pred))
-print("Test Set Performance:")
-print(classification_report(y_test, y_RandomForest_test_pred))
+		# ROC Curve (binary)
+		if hasattr(rf, "predict_proba"):
+			fpr, tpr, _ = roc_curve(y_test, rf.predict_proba(X_test)[:, 1])
+			auc_val = auc(fpr, tpr)
+			plt.figure(figsize=(6, 5))
+			plt.plot(fpr, tpr, label=f"ROC (AUC = {auc_val:.3f})")
+			plt.plot([0, 1], [0, 1], linestyle="--")
+			plt.xlabel("False Positive Rate")
+			plt.ylabel("True Positive Rate")
+			plt.title("ROC Curve")
+			plt.legend()
+			plt.tight_layout()
+			plt.show()
 
-# Create visualization plots
-plt.figure(figsize=(15, 10))
+	feat_imp = None
 
-#Confusion Matrix Heatmap
-plt.subplot(2, 1, 1)
-cm = confusion_matrix(y_test, y_RandomForest_test_pred)
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.title('Confusion Matrix')
-plt.ylabel('True Label')
-plt.xlabel('Predicted Label')
+	if show_importance:
+		# 8) Feature importances
+		importances = rf.feature_importances_
+		feat_imp = pd.DataFrame({
+			"Feature": X.columns,
+			"Importance (Raw)": importances,
+		})
+		feat_imp["Importance (Abs)"] = feat_imp["Importance (Raw)"].abs()
+		feat_imp = feat_imp.sort_values(by="Importance (Abs)", ascending=False).reset_index(drop=True)
 
+		print("\nFeature Importance (Random Forest):")
+		print(feat_imp.to_string(index=False))
 
-#ROC Curve
-plt.subplot(2, 1, 2)
-fpr, tpr, _ = roc_curve(y_test, RandomForest.predict_proba(x_test)[:,1])
-plt.plot(fpr, tpr, label=f'ROC curve (AUC = {auc(fpr, tpr):.2f})')
-plt.plot([0, 1], [0, 1], 'k--')
-plt.xlabel('False Positive Rate')
-plt.ylabel('True Positive Rate')
-plt.title('ROC Curve')
-plt.legend()
-plt.tight_layout()
-plt.show()
+		# Plot 1: Absolute importance
+		plt.figure(figsize=(10, max(4, 0.35 * len(feat_imp))))
+		plt.barh(feat_imp["Feature"], feat_imp["Importance (Abs)"])
+		plt.gca().invert_yaxis()
+		plt.xlabel("Importance (Strength)")
+		plt.title("Random Forest — Feature Importance (Absolute)")
+		plt.tight_layout()
+		plt.show()
+
+	return feat_imp
+
+# === Example usage ===
+do_model("CSVs/Output/merged_OPSSAT_segments.csv", graph=False, show_importance=True)
 

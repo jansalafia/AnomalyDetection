@@ -27,10 +27,10 @@ def do_model(path: str,
     y = df['anomaly']
     X = df.drop(columns=['anomaly', 'timestamp', 'channel', 'label'], errors='ignore')
 
-    # 3) Standardize (so coefficients are comparable across features)
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    X = pd.DataFrame(X_scaled, columns=X.columns)
+    # # 3) Standardize (so coefficients are comparable across features)         //STANDARDIZING ALTERS FEATURE IMPORTANCE
+    # scaler = StandardScaler()
+    # X_scaled = scaler.fit_transform(X)
+    # X = pd.DataFrame(X_scaled, columns=X.columns)
 
     # 4) Split
     X_train, X_test, y_train, y_test = train_test_split(
