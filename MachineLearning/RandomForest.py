@@ -22,9 +22,16 @@ def do_model(path: str,
 	# 1) Load
 	df = pd.read_csv(path)
 
-	# 2) Prepare X, y
+# 2) Prepare X, y
+	X = df.drop(columns=['anomaly','timestamp','channel','label'], errors='ignore')
 	y = df['anomaly']
-	X = df.drop(columns=['anomaly', 'timestamp', 'channel', 'label'], errors='ignore')
+	
+	# 3) Stratified 80/20 split
+	from sklearn.model_selection import train_test_split
+	X_train, X_test, y_train, y_test = train_test_split(
+	    X, y, test_size=0.2, random_state=100, stratify=y if len(y.unique()) == 2 else None
+	)
+
 
 	# # 3) Standardize (optional for RF, but keeps parity with LR)
 	# scaler = StandardScaler()
@@ -37,8 +44,15 @@ def do_model(path: str,
 	)
 
 	# 5) Model
-	rf = RandomForestClassifier(random_state=100)
+	rf = RandomForestClassifier(
+    n_estimators=300,
+    max_depth=12,           	# cap depth
+    min_samples_leaf=5,     	# don’t let leaves get too tiny
+    random_state=100,
+    oob_score=True,         	# extra honest estimate (with bootstrap=True by default)
+)
 	rf.fit(X_train, y_train)
+	# print(rf.feature_importances_)
 
 	# 6) Evaluate
 	y_pred_train = rf.predict(X_train)
@@ -99,5 +113,5 @@ def do_model(path: str,
 	return feat_imp
 
 # Example usage:
-do_model("CSVs\OPSAT-AD_modified.csv", graph=False, show_importance=True)
+do_model("CSVs\OPSAT-AD_modified.csv", graph=False, show_importance=False)
 
