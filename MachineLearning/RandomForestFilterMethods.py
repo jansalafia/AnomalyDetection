@@ -1,27 +1,30 @@
-# RandomForest_with_filters.py
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, roc_curve, auc
+from sklearn.metrics import classification_report, roc_curve, auc, make_scorer, f1_score
 
-# Filter-methods
+# Filter methods
 from sklearn.feature_selection import f_classif, chi2, mutual_info_classif
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.inspection import permutation_importance  # optional, for signed PI
+from sklearn.inspection import permutation_importance
+from sklearn.feature_selection import RFE, SequentialFeatureSelector
 
+
+# =======================
+# ---- Filter Methods ---
+# =======================
 def filter_importance_table(X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
     """
-    Compute model-agnostic (filter) scores per feature:
+    Compute model-agnostic filter scores:
       - ANOVA F
-      - Chi-square (requires non-negative inputs; run on MinMax-scaled copy)
-      - Mutual Information (nonlinear dependence)
-      - |Correlation| with binary target (point-biserial ≡ Pearson with {0,1})
-    Returns a DataFrame ranked by CombinedScore (mean of normalized F, chi2, MI, |R|).
+      - Chi-square (MinMax scaled)
+      - Mutual Information
+      - |Correlation| with binary target
+    Returns DataFrame sorted by CombinedScore.
     """
-    # Keep numeric, clean NaNs/Infs
     Xn = X.select_dtypes(include=[np.number]).copy()
     Xn.replace([np.inf, -np.inf], np.nan, inplace=True)
     Xn.fillna(0.0, inplace=True)
@@ -31,14 +34,14 @@ def filter_importance_table(X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
     # 1) ANOVA F
     F_vals, F_p = f_classif(Xn, y_arr)
 
-    # 2) Chi-square on non-negative copy
+    # 2) Chi-square
     X_nonneg = pd.DataFrame(MinMaxScaler().fit_transform(Xn), columns=Xn.columns)
     chi2_vals, chi2_p = chi2(X_nonneg, y_arr)
 
     # 3) Mutual Information
     MI_vals = mutual_info_classif(Xn, y_arr, random_state=0)
 
-    # 4) Point-biserial correlation (signed). Use Pearson with binary y.
+    # 4) Point-biserial correlation
     R_vals = np.array([np.corrcoef(Xn[col].values, y_arr)[0, 1] for col in Xn.columns])
     R_vals = np.nan_to_num(R_vals, nan=0.0)
     AbsR_vals = np.abs(R_vals)
@@ -54,7 +57,6 @@ def filter_importance_table(X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
         "|R|": AbsR_vals,
     })
 
-    # Normalize to [0,1] for a blended strength score
     def _norm(col):
         v = df[col].values
         vmin, vmax = float(np.min(v)), float(np.max(v))
@@ -64,9 +66,9 @@ def filter_importance_table(X: pd.DataFrame, y: pd.Series) -> pd.DataFrame:
     for col in ["F (ANOVA)", "chi2", "MI", "|R|"]:
         df[col + " (norm)"] = _norm(col)
 
-    # Equal-weight blend (tweak if you want to emphasize MI, etc.)
     df["CombinedScore"] = df[[c for c in df.columns if c.endswith("(norm)")]].mean(axis=1)
     return df.sort_values("CombinedScore", ascending=False).reset_index(drop=True)
+
 
 def plot_filter_importance(scores_df: pd.DataFrame, top_n: int = 20, title="Filter Feature Importance (Combined)"):
     top = scores_df.head(top_n)
@@ -78,6 +80,68 @@ def plot_filter_importance(scores_df: pd.DataFrame, top_n: int = 20, title="Filt
     plt.tight_layout()
     plt.show()
 
+
+# =======================
+# ---- Wrapper Methods ----
+# =======================
+
+
+# RFE (Recursive Feature Elimination)
+
+# A combination of backward elimination with a recursive approach.
+# Ranks all the features based on their importance.
+# Recursively removes the least important ones and retrains the model.
+# Continues until the desired number of features is reached.
+# Example use case: Widely used with support vector machines and linear models for model interpretability.
+
+def rfe_select(X, y, n_features=20, estimator=None, step=1):
+    print(f"\n[RFE] Selecting top {n_features} features using RFE...")
+    """Recursive Feature Elimination (RFE)."""
+    base = estimator or RandomForestClassifier(random_state=100, n_jobs=-1)
+    rfe = RFE(estimator=base, n_features_to_select=n_features, step=step)
+    rfe.fit(X, y)
+    selected = X.columns[rfe.support_].tolist()
+    print(f"\n[RFE] Selected {len(selected)} features:\n{selected}")
+    return selected
+
+
+#Sequential Feature Selection (SFS)
+
+# Forward Selection
+# Starts with no features.
+# Adds one feature at a time.
+# At each step, it adds the feature that improves model performance the most.
+# Stops when adding more features does not improve the model.
+# Example use case: When you expect only a few features to be useful and want a quick way to build up a model.
+# 
+# Backward Elimination
+# Starts with all features.
+# Removes one feature at a time.
+# At each step, it removes the feature that contributes the least to the model.
+# Stops when removing more features degrades performance.
+
+def sequential_select(X, y, n_features=20, direction="forward",
+                      estimator=None, scoring="f1", cv=5):
+    print(f"\n[SFS-{direction}] Selecting top {n_features} features using SFS...")
+    """Sequential Feature Selection (forward/backward)."""
+    base = estimator or RandomForestClassifier(random_state=100, n_jobs=-1)
+    scorer = make_scorer(f1_score) if scoring == "f1" else scoring
+    sfs = SequentialFeatureSelector(
+        base, n_features_to_select=n_features,
+        direction=direction, scoring=scorer, cv=cv, n_jobs=-1
+    )
+    sfs.fit(X, y)
+    selected = X.columns[sfs.get_support()].tolist()
+    print(f"\n[SFS-{direction}] Selected {len(selected)} features:\n{selected}")
+    return selected
+
+
+# =======================
+# ---- Main Pipeline ----
+# =======================
+
+#Default parameters for do_model
+
 def do_model(path: str,
              graph: bool = False,
              show_importance: bool = True,
@@ -88,36 +152,26 @@ def do_model(path: str,
              filter_csv_path: str | None = None,
              use_permutation: bool = False,
              perm_metric: str = "f1",
-             perm_repeats: int = 20):
+             perm_repeats: int = 20,
+             use_wrapper: bool = False,
+             wrapper_method: str = "rfe",    # "rfe" or "sfs"
+             wrapper_k: int = 20,
+             sfs_direction: str = "forward"):
     """
-    Train Random Forest on `path`, print metrics, and (optionally) show feature importance.
-
-    New params for filter methods:
-      - use_filters: compute filter scores (ANOVA F, χ², MI, |corr|)
-      - filter_k: keep only top-K by CombinedScore (if None, keep all)
-      - filter_plot: show bar chart of top features by CombinedScore
-      - save_filter_csv: save filter score table to CSV
-
-    Extra:
-      - use_permutation: also compute permutation importance (can be negative/signed)
-      - perm_metric: scoring metric for permutation_importance (e.g., "f1", "accuracy")
-      - perm_repeats: n_repeats for permutation importance
-
-    Returns:
-      feat_imp (pd.DataFrame) — RF impurity importances on the final feature set
+    Train Random Forest on `path` with optional filter and/or wrapper feature selection.
     """
+
     # 1) Load
     df = pd.read_csv(path)
 
     # 2) Prepare X, y
     y = df['anomaly']
     X = df.drop(columns=['anomaly', 'timestamp', 'channel', 'label'], errors='ignore')
-    # Ensure numeric for training
     X = X.select_dtypes(include=[np.number]).copy()
     X.replace([np.inf, -np.inf], np.nan, inplace=True)
     X.fillna(0.0, inplace=True)
 
-    # ----- Optional: filter stage -----
+    # ----- Filter stage -----
     scores_df = None
     if use_filters:
         scores_df = filter_importance_table(X, y)
@@ -138,26 +192,37 @@ def do_model(path: str,
             print(f"\nUsing top-{filter_k} features from filters:\n{top_features}")
             X = X[top_features]
 
-    # 3) Split
+    # ----- Wrapper stage -----
+    if use_wrapper:
+        if wrapper_method.lower() == "rfe":
+            top_features = rfe_select(X, y, n_features=wrapper_k)
+        elif wrapper_method.lower() == "sfs":
+            top_features = sequential_select(
+                X, y, n_features=wrapper_k, direction=sfs_direction, scoring="f1"
+            )
+        else:
+            raise ValueError("wrapper_method must be 'rfe' or 'sfs'")
+        print(f"\nUsing top-{wrapper_k} features from {wrapper_method.upper()}:\n{top_features}")
+        X = X[top_features]
+
+    # 3) Train/test split
     X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=100, stratify=y if len(y.unique()) == 2 else None
+        X, y, test_size=0.2, random_state=100,
+        stratify=y if len(y.unique()) == 2 else None
     )
 
-    # 4) Model
+    # 4) Train model
     rf = RandomForestClassifier(random_state=100)
     rf.fit(X_train, y_train)
 
     # 5) Evaluate
-    y_pred_train = rf.predict(X_train)
-    y_pred_test  = rf.predict(X_test)
-
     print("\nModel Performance:")
     print("Training Set Performance:")
-    print(classification_report(y_train, y_pred_train))
+    print(classification_report(y_train, rf.predict(X_train)))
     print("Test Set Performance:")
-    print(classification_report(y_test, y_pred_test))
+    print(classification_report(y_test, rf.predict(X_test)))
 
-    # 6) ROC (binary)
+    # 6) ROC curve
     if graph and hasattr(rf, "predict_proba") and (len(np.unique(y_test)) == 2):
         fpr, tpr, _ = roc_curve(y_test, rf.predict_proba(X_test)[:, 1])
         auc_val = auc(fpr, tpr)
@@ -171,7 +236,7 @@ def do_model(path: str,
         plt.tight_layout()
         plt.show()
 
-    # 7) RF impurity importances (non-negative, sum to 1)
+    # 7) RandomForest importance
     feat_imp = None
     if show_importance:
         importances = rf.feature_importances_
@@ -191,10 +256,11 @@ def do_model(path: str,
         plt.tight_layout()
         plt.show()
 
-    # 8) Optional: Permutation Importance (can be negative; shows direction wrt chosen metric)
+    # 8) Permutation importance
     if use_permutation:
         perm = permutation_importance(
-            rf, X_test, y_test, n_repeats=perm_repeats, random_state=100, n_jobs=-1, scoring=perm_metric
+            rf, X_test, y_test, n_repeats=perm_repeats,
+            random_state=100, n_jobs=-1, scoring=perm_metric
         )
         perm_df = pd.DataFrame({
             "Feature": X.columns,
@@ -205,7 +271,6 @@ def do_model(path: str,
         print(f"\nPermutation Importance on test set (scoring='{perm_metric}'):")
         print(perm_df.to_string(index=False))
 
-        # Plot absolute and signed views
         plt.figure(figsize=(10, max(4, 0.35 * len(perm_df))))
         plt.barh(perm_df["Feature"], np.abs(perm_df["Perm Importance (Mean Δscore)"]))
         plt.gca().invert_yaxis()
@@ -222,15 +287,23 @@ def do_model(path: str,
 
     return feat_imp
 
-# === Example usage (matches your original call) ===
-# Plain RF:
-# do_model("CSVs/Output/merged_OPSSAT_segments.csv", graph=False, show_importance=True)
 
-# RF with filter stage (top-20):
-do_model("CSVs\OPSAT-AD_modified.csv",
-         use_filters=True, filter_k=20, filter_plot=True,
-         graph=False, show_importance=True)
-
-# RF + filters + permutation importance:
-# do_model("CSVs/Output/merged_OPSSAT_segments.csv",
-#          use_filters=True, filter_k=20, use_permutation=True, perm_metric="f1")
+# === Example usage ===
+if __name__ == "__main__":
+    do_model(
+        "CSVs/OPSAT-AD_modified.csv",
+        use_filters=True, filter_k=20, filter_plot=True,
+        use_wrapper=True, wrapper_method="sfs", wrapper_k=15, sfs_direction="forward",
+        graph=False, show_importance=True
+    )
+    do_model(
+        "CSVs/OPSAT-AD_modified.csv",
+        use_filters=True, filter_k=20, filter_plot=True,
+        use_wrapper=True, wrapper_method="sfs", wrapper_k=15, sfs_direction="backward",
+        graph=False, show_importance=True
+    )
+    do_model(
+        "CSVs/OPSAT-AD_modified.csv",
+        use_filters=True, filter_k=20, filter_plot=True,
+        use_wrapper=True, wrapper_method="rfe", wrapper_k=15, graph=False, show_importance=True
+    )

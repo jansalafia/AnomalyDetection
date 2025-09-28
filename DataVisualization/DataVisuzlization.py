@@ -3,6 +3,7 @@ import plotly.express as px
 import dash
 from dash import dcc, html
 from sklearn.decomposition import PCA
+from dash.dependencies import Output, Input
 
 # Load the data
 df = pd.read_csv("CSVs/OPSAT-AD_modified.csv")
@@ -61,7 +62,7 @@ if 'PCA1' in df.columns and 'PCA2' in df.columns:
                          labels={"PCA1": "Principal Component 1", "PCA2": "Principal Component 2"},
                          color_continuous_scale=["blue", "red"])
 
-# Columns for dropdowns
+# Dropdown options for numeric columns
 column_options = [col for col in features.columns]
 
 def make_column_plot(col):
@@ -70,30 +71,24 @@ def make_column_plot(col):
                       labels={"index": "Index", col: col},
                       color_continuous_scale=["blue", "red"])
 
+# Box plot
 def make_box_plot(col):
-    return px.box(df, x="anomaly", y=col, color="anomaly",
-                  title=f"Box Plot of {col} by Anomaly",
-                  labels={"anomaly": "Anomaly", col: col},
-                  color_discrete_map={0: "blue", 1: "red"})
+    return px.box(df, y=col,
+                  title=f"Box Plot of {col} (All Data Combined)",
+                  labels={col: col})
 
 app.layout = html.Div([
     html.H1("OPSSAT Anomaly Explorer"),
 
-
-    #Anomaly Overview Tab
     dcc.Tabs([
         dcc.Tab(label="Anomaly Overview", children=[
             dcc.Graph(figure=anomaly_fig),
         ]),
 
-
-        #PCA Scatter Plot
         dcc.Tab(label="PCA Visualization", children=[
             dcc.Graph(figure=pca_fig) if pca_fig else html.Div("No PCA available")
         ]),
 
-
-        #Per Column Scatter Plot
         dcc.Tab(label="Per-Column Scatter", children=[
             html.Label("Select Column:"),
             dcc.Dropdown(
@@ -106,7 +101,6 @@ app.layout = html.Div([
             dcc.Graph(id="column-graph")
         ]),
 
-        #Box Plot
         dcc.Tab(label="Per-Column Box Plot", children=[
             html.Label("Select Column for Box Plot:"),
             dcc.Dropdown(
@@ -121,8 +115,6 @@ app.layout = html.Div([
 ])
 
 # === Callbacks ===
-from dash.dependencies import Output, Input
-
 @app.callback(
     [Output("column-graph", "figure"),
      Output("column-description", "children")],
