@@ -5,109 +5,142 @@ from dash import dcc, html
 from sklearn.decomposition import PCA
 from dash.dependencies import Output, Input
 
-# Load the data
-df = pd.read_csv("CSVs/OPSAT-AD_modified.csv")
+# === Load Data ===
+df = pd.read_csv("CSVs/ToBeMerged/newDataset.csv")
 
-# Identify numeric columns
-numeric_cols = df.select_dtypes(include=['float64', 'int64']).columns
-features = df[numeric_cols].drop(columns=['anomaly', 'train', 'sampling', 'segment'], errors='ignore')
+# Identify numeric features
+numeric_cols = df.select_dtypes(include=["float64", "int64"]).columns
+features = df[numeric_cols].drop(columns=["anomaly", "train", "sampling", "segment"], errors="ignore")
 
-# PCA computation
+# PCA Computation
 if not features.empty:
     pca = PCA(n_components=2)
     pca_result = pca.fit_transform(features)
-    df['PCA1'] = pca_result[:, 0]
-    df['PCA2'] = pca_result[:, 1]
+    df["PCA1"] = pca_result[:, 0]
+    df["PCA2"] = pca_result[:, 1]
 
-# === Column descriptions ===
+# === Manual Feature Groups ===
+feature_groups = {
+    "Amplitude Stats":      ["mean", "std", "var"],
+    "Shape Stats":          ["kurtosis", "skew"],
+    "Peaks":                ["n_peaks", "smooth5_n_peaks", "smooth10_n_peaks", "smooth20_n_peaks"],
+    "Derivative Peaks":     ["diff_peaks", "diff2_peaks"],
+    "Derivative Variance":  ["diff_var", "diff2_var"],
+    "Durations":            ["duration", "len", "len_weighted"],
+    "Variance Ratios":      ["var_div_duration", "var_div_len"]
+}
+
+# Column descriptions (used in Scatter tab)
 column_descriptions = {
-    "segment": "Identifier for the data segment.",
-    "anomaly": "Binary label indicating whether the segment is anomalous (1) or normal (0).",
-    "train": "Indicator if the segment belongs to the training set.",
-    "sampling": "Sampling rate or method used.",
-    "duration": "Duration of the segment.",
-    "len": "Length (number of samples) in the segment.",
     "mean": "Mean (average) value of the segment.",
-    "var": "Variance of the segment values.",
     "std": "Standard deviation of the segment values.",
+    "var": "Variance of the segment values.",
     "kurtosis": "Measure of tailedness of the distribution.",
     "skew": "Skewness, measuring asymmetry of the distribution.",
     "n_peaks": "Number of peaks detected in the signal.",
+    "smooth5_n_peaks": "Number of peaks detected after smoothing with a 5-point window.",
     "smooth10_n_peaks": "Number of peaks detected after smoothing with a 10-point window.",
     "smooth20_n_peaks": "Number of peaks detected after smoothing with a 20-point window.",
     "diff_peaks": "Number of peaks detected in the first derivative of the signal.",
     "diff2_peaks": "Number of peaks detected in the second derivative.",
     "diff_var": "Variance of the first derivative.",
     "diff2_var": "Variance of the second derivative.",
-    "gaps_squared": "Sum of squared gaps between peaks.",
+    "duration": "Duration of the segment.",
+    "len": "Length (number of samples) in the segment.",
     "len_weighted": "Length normalized or weighted feature.",
     "var_div_duration": "Variance normalized by segment duration.",
     "var_div_len": "Variance normalized by segment length."
 }
 
+# === Plot Functions ===
+def make_scatter(col):
+    return px.scatter(
+        df.reset_index(), x="index", y=col, color="anomaly",
+        title=f"Scatter of {col} by Anomaly",
+        labels={"index": "Index", col: col},
+        color_continuous_scale=["blue", "red"]
+    )
+
+def make_group_box(group_name, log_scale=False):
+    """Box plot comparing all features in a group side by side (clean, no raw points)."""
+    cols = feature_groups[group_name]
+    melted = df[cols].melt(var_name="Feature", value_name="Value")
+    fig = px.box(
+        melted, x="Feature", y="Value",
+        title=f"Box Plot Comparison: {group_name}"
+        # no 'points' argument -> clean boxes
+    )
+    if log_scale:
+        fig.update_yaxes(type="log")
+    return fig
+
+# === Static Figures ===
+anomaly_fig = px.scatter(
+    df.reset_index(), x="index", y="anomaly", color="anomaly",
+    title="Anomaly Label Scatter",
+    labels={"index": "Index", "anomaly": "Anomaly"},
+    color_continuous_scale=["blue", "red"]
+)
+
+pca_fig = None
+if "PCA1" in df.columns and "PCA2" in df.columns:
+    pca_fig = px.scatter(
+        df, x="PCA1", y="PCA2", color="anomaly",
+        title="PCA of Telemetry Features",
+        labels={"PCA1": "Principal Component 1", "PCA2": "Principal Component 2"},
+        color_continuous_scale=["blue", "red"]
+    )
+
 # === Dash App ===
 app = dash.Dash(__name__)
-
-# Tab 1: Anomaly overview
-anomaly_fig = px.scatter(df.reset_index(), x="index", y="anomaly", color="anomaly",
-                         title="Anomaly Label Scatter",
-                         labels={"index": "Index", "anomaly": "Anomaly"},
-                         color_continuous_scale=["blue", "red"])
-
-# Tab 2: PCA Scatter
-pca_fig = None
-if 'PCA1' in df.columns and 'PCA2' in df.columns:
-    pca_fig = px.scatter(df, x="PCA1", y="PCA2", color="anomaly",
-                         title="PCA of Telemetry Features",
-                         labels={"PCA1": "Principal Component 1", "PCA2": "Principal Component 2"},
-                         color_continuous_scale=["blue", "red"])
-
-# Dropdown options for numeric columns
-column_options = [col for col in features.columns]
-
-def make_column_plot(col):
-    return px.scatter(df.reset_index(), x="index", y=col, color="anomaly",
-                      title=f"Scatter of {col} by Anomaly",
-                      labels={"index": "Index", col: col},
-                      color_continuous_scale=["blue", "red"])
-
-# Box plot
-def make_box_plot(col):
-    return px.box(df, y=col,
-                  title=f"Box Plot of {col} (All Data Combined)",
-                  labels={col: col})
 
 app.layout = html.Div([
     html.H1("OPSSAT Anomaly Explorer"),
 
     dcc.Tabs([
+
+        # ---- Anomaly Overview ----
         dcc.Tab(label="Anomaly Overview", children=[
-            dcc.Graph(figure=anomaly_fig),
+            dcc.Graph(figure=anomaly_fig)
         ]),
 
+        # ---- PCA Visualization ----
         dcc.Tab(label="PCA Visualization", children=[
             dcc.Graph(figure=pca_fig) if pca_fig else html.Div("No PCA available")
         ]),
 
-        dcc.Tab(label="Per-Column Scatter", children=[
-            html.Label("Select Column:"),
+        # ---- Grouped Scatter (as before) ----
+        dcc.Tab(label="Grouped Scatter", children=[
+            html.Label("Select Feature Group:"),
             dcc.Dropdown(
-                id="column-dropdown",
-                options=[{"label": c, "value": c} for c in column_options],
-                value=column_options[0] if column_options else None,
+                id="scatter-group",
+                options=[{"label": g, "value": g} for g in feature_groups.keys()],
+                value=list(feature_groups.keys())[0],
                 clearable=False
             ),
-            html.Div(id="column-description", style={"marginTop": "10px", "fontStyle": "italic"}),
-            dcc.Graph(id="column-graph")
+            html.Label("Select Feature:"),
+            dcc.Dropdown(id="scatter-feature", clearable=False),
+            html.Div(id="scatter-description", style={"marginTop": "10px", "fontStyle": "italic"}),
+            dcc.Graph(id="scatter-graph")
         ]),
 
-        dcc.Tab(label="Per-Column Box Plot", children=[
-            html.Label("Select Column for Box Plot:"),
+        # ---- Grouped Box Plot (clean) ----
+        dcc.Tab(label="Grouped Box Plot", children=[
+            html.Label("Select Feature Group:"),
             dcc.Dropdown(
-                id="box-dropdown",
-                options=[{"label": c, "value": c} for c in column_options],
-                value=column_options[0] if column_options else None,
+                id="box-group",
+                options=[{"label": g, "value": g} for g in feature_groups.keys()],
+                value=list(feature_groups.keys())[0],
                 clearable=False
+            ),
+            html.Br(),
+            html.Label("Y-axis Scale:"),
+            dcc.RadioItems(
+                id="box-scale",
+                options=[{"label": "Linear", "value": "linear"},
+                         {"label": "Log", "value": "log"}],
+                value="linear",
+                inline=True
             ),
             dcc.Graph(id="box-graph")
         ])
@@ -115,26 +148,33 @@ app.layout = html.Div([
 ])
 
 # === Callbacks ===
+# Update scatter feature list
 @app.callback(
-    [Output("column-graph", "figure"),
-     Output("column-description", "children")],
-    [Input("column-dropdown", "value")]
+    Output("scatter-feature", "options"),
+    Input("scatter-group", "value")
 )
-def update_column_plot(selected_col):
-    if selected_col:
-        fig = make_column_plot(selected_col)
-        description = column_descriptions.get(selected_col, "No description available for this column.")
-        return fig, description
+def update_scatter_options(group):
+    return [{"label": f, "value": f} for f in feature_groups[group]]
+
+# Update scatter plot + description
+@app.callback(
+    [Output("scatter-graph", "figure"),
+     Output("scatter-description", "children")],
+    Input("scatter-feature", "value")
+)
+def update_scatter_plot(feature):
+    if feature:
+        return make_scatter(feature), column_descriptions.get(feature, "No description available.")
     return {}, ""
 
+# Update grouped box plot
 @app.callback(
     Output("box-graph", "figure"),
-    [Input("box-dropdown", "value")]
+    [Input("box-group", "value"),
+     Input("box-scale", "value")]
 )
-def update_box_plot(selected_col):
-    if selected_col:
-        return make_box_plot(selected_col)
-    return {}
+def update_box_plot(group, scale):
+    return make_group_box(group, log_scale=(scale == "log"))
 
 if __name__ == "__main__":
     app.run(debug=True)
