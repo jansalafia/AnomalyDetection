@@ -120,5 +120,5 @@ def do_model(path: str,
     return feat_imp
 
 
-# === Example usage (mirrors your LR file) ===
+# === Example usage ===
 do_model('CSVs/OPSAT-AD_modified.csv', graph=False, show_importance=True)
