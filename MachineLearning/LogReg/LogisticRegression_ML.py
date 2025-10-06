@@ -81,7 +81,7 @@ def do_model(path: str,
     feature_names = list(X.columns)
     return logreg, X_train, X_test, y_train, y_test, feature_names
 
-# === Example (kept aligned with original usage) ===
+# === Example ===
 logreg, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
 
 from sklearn.pipeline import Pipeline
