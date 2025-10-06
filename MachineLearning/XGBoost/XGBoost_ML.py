@@ -41,7 +41,6 @@ def do_model(path: str,
         random_state=random_state,
         n_jobs=-1,
         eval_metric='logloss',
-        use_label_encoder=False
     )
     if xgb_params:
         params.update(xgb_params)
