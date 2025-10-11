@@ -9,7 +9,7 @@ from sklearn.metrics import classification_report, roc_curve, auc
 def do_model(path: str,
              graph: bool = False,
              random_state: int = 100,
-             test_size: float = 0.95):
+             test_size: float = 0.80):
 
     # Train Logistic Regression on `path` and print metrics.
 
@@ -96,7 +96,7 @@ pipe = Pipeline([
 
 param_grid = {
     "clf__solver": ["liblinear"],   
-    "clf__penalty": ["l2"],                
+    "clf__penalty": ["l2", "l1"],                
     "clf__C": [0.01, 0.1, 1, 10],
     "clf__class_weight": [None, "balanced"]
 }
