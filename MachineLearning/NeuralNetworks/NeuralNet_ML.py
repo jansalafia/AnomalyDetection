@@ -92,13 +92,13 @@ def do_model(path: str,
 
 
 # === Example (same usage style) ===
-# mlp, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
+# mlp, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
 
 
 # === Grid Search (similar style to LogisticRegression_ML.py) ===
 if __name__ == "__main__":
     # Run once to get the split
-    mlp, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/newDataset.csv', graph=False)
+    mlp, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
 
     # Scale features before MLP (important)
     pipe = Pipeline([

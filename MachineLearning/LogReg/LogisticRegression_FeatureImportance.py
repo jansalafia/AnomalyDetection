@@ -54,5 +54,5 @@ def feature_importance(model: LogisticRegression,
 # === Example usage with the ML module (mirrors original workflow without duplication) ===
 if __name__ == "__main__":
     from LogisticRegression_ML import do_model
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
     feature_importance(model, feature_names, plot=True)
