@@ -58,7 +58,7 @@ def linear_coef_importance(model: SVC | Pipeline,
 def permutation_importance_report(model: SVC | Pipeline,
                                   X_test: pd.DataFrame,
                                   y_test: pd.Series,
-                                  scoring: str = "f1",
+                                  scoring: str = "accuracy",
                                   n_repeats: int = 20,
                                   plot: bool = True) -> pd.DataFrame:
     """

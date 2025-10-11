@@ -98,7 +98,7 @@ def do_model(path: str,
 # === Grid Search (similar style to LogisticRegression_ML.py) ===
 if __name__ == "__main__":
     # Run once to get the split
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/newDataset.csv', graph=False) #dataset.csv has slighly better results
 
     # Pipeline for tuning (always scale for SVM)
     pipe = Pipeline([
@@ -133,3 +133,4 @@ if __name__ == "__main__":
     y_pred = best_model.predict(X_test)
     print("\nGridSearchCV Best Model — Test Performance:")
     print(classification_report(y_test, y_pred))
+    

@@ -82,7 +82,7 @@ def do_model(path: str,
     return logreg, X_train, X_test, y_train, y_test, feature_names
 
 # === Example ===
-logreg, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
+logreg, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/newDataset.csv', graph=False)
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
