@@ -291,19 +291,19 @@ def do_model(path: str,
 # === Example usage ===
 if __name__ == "__main__":
     do_model(
-        "CSVs/OPSAT-AD_modified.csv",
+        'CSVs\ToBeMerged\dataset.csv',
         use_filters=True, filter_k=20, filter_plot=True,
         use_wrapper=True, wrapper_method="sfs", wrapper_k=15, sfs_direction="forward",
         graph=False, show_importance=True
     )
     do_model(
-        "CSVs/OPSAT-AD_modified.csv",
+        'CSVs\ToBeMerged\dataset.csv',
         use_filters=True, filter_k=20, filter_plot=True,
         use_wrapper=True, wrapper_method="sfs", wrapper_k=15, sfs_direction="backward",
         graph=False, show_importance=True
     )
     do_model(
-        "CSVs/OPSAT-AD_modified.csv",
+        'CSVs\ToBeMerged\dataset.csv',
         use_filters=True, filter_k=20, filter_plot=True,
         use_wrapper=True, wrapper_method="rfe", wrapper_k=15, graph=False, show_importance=True
     )

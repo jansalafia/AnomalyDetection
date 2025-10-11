@@ -44,7 +44,7 @@ def feature_importance(model: RandomForestClassifier,
 # === Example usage with the ML module ===
 if __name__ == "__main__":
     from RandomForest_ML import do_model
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False)
     feature_importance(model, feature_names, plot=False)
 
 

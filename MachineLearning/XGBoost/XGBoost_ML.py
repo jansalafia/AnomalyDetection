@@ -82,4 +82,4 @@ def do_model(path: str,
     return clf, X_train, X_test, y_train, y_test, feature_names
 
 # === Example ===
-clf, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
+clf, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False)
