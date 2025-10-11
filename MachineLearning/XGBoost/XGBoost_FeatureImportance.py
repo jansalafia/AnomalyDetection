@@ -40,5 +40,5 @@ def feature_importance(model: xgb.XGBClassifier,
 # === Example usage with the ML module (mirrors your LogisticRegression_FeatureImportance style) ===
 if __name__ == "__main__":
     from XGBoost_ML import do_model
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False)
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
     feature_importance(model, feature_names, plot=True)

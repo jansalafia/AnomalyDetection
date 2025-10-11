@@ -86,7 +86,7 @@ def permutation_importance_report(model: MLPClassifier,
 # === Example usage with the ML module ===
 if __name__ == "__main__":
     from NeuralNet_ML import do_model
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
     # Weight-based proxy importance
     input_weight_importance(model, feature_names, plot=True)
     # Permutation-based importance on test set

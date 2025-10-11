@@ -92,13 +92,13 @@ def do_model(path: str,
 
 
 # === Example training (same usage style) ===
-# model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False)
+# model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
 
 
 # === Grid Search (similar style to LogisticRegression_ML.py) ===
 if __name__ == "__main__":
     # Run once to get the split
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False)
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
 
     # Pipeline for tuning (always scale for SVM)
     pipe = Pipeline([

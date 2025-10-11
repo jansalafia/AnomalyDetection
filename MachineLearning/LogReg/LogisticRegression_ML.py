@@ -82,7 +82,7 @@ def do_model(path: str,
     return logreg, X_train, X_test, y_train, y_test, feature_names
 
 # === Example ===
-logreg, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs/OPSAT-AD_modified.csv', graph=False)
+logreg, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
 
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -96,7 +96,7 @@ pipe = Pipeline([
 
 param_grid = {
     "clf__solver": ["liblinear"],   
-    "clf__penalty": ["l2", "l1"],                
+    "clf__penalty": ["l2"],                
     "clf__C": [0.01, 0.1, 1, 10],
     "clf__class_weight": [None, "balanced"]
 }

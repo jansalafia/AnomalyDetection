@@ -102,7 +102,7 @@ def permutation_importance_report(model: SVC | Pipeline,
 if __name__ == "__main__":
     from SVM_ML import do_model
     # For linear coefficients, pass svm_params={'kernel':'linear'}
-    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False, svm_params={'kernel':'linear'})
+    model, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False, svm_params={'kernel':'linear'})
     # Coefficient-based importance (linear only)
     try:
         linear_coef_importance(model, feature_names, plot=True)

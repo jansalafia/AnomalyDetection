@@ -81,7 +81,7 @@ def do_model(path: str,
     return rf, X_train, X_test, y_train, y_test, feature_names
 
 # === Example (kept aligned with the LogisticRegression_ML style) ===
-rf, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\ToBeMerged\dataset.csv', graph=False)
+rf, X_train, X_test, y_train, y_test, feature_names = do_model('CSVs\dataset.csv', graph=False)
 
 # Simple GridSearchCV example for RandomForest (mirrors the template pattern)
 param_grid = {
