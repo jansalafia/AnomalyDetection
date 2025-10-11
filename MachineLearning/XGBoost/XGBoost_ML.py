@@ -160,7 +160,7 @@ if __name__ == "__main__":
     # 8) Evaluate on the held-out test split
     y_pred = best_model.predict(X_test)
     print("\nGridSearchCV Best Model — Test Performance:")
-    print(classification_report(y_test, y_pred))
+    print(classification_report(y_test, y_pred)) 
 
     # Optional: Confusion Matrix + ROC for the tuned model
     # ConfusionMatrixDisplay.from_predictions(y_test, y_pred)
