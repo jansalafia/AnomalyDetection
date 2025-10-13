@@ -10,9 +10,9 @@ app = dash.Dash(__name__)
 app.title = "Anomaly Logistic Regression Detection Comparison"
 
 # Paths to CSVs
-LAST_RESULT_CSV = "Results/Logistic Regression/results_logreg.csv"
-BEST_RESULT_CSV = "Results/Logistic Regression/results_logreg_best.csv"
-POISONED_RESULT_CSV = "Results/Logistic Regression/results_logreg_poisoned.csv"
+LAST_RESULT_CSV = "Results/LogRegResults/results_logreg.csv"
+BEST_RESULT_CSV = "Results/LogRegResults/results_logreg_best.csv"
+POISONED_RESULT_CSV = "Results/LogRegResults/results_logreg_poisoned.csv"
 
 def load_csv(file_path):
     """Safely load CSV and round numeric columns to 3 decimal places"""
