@@ -97,6 +97,8 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
     print("\nNeuralNet — Test Set Performance:")
     print(classification_report(y_test, y_pred))
     print("\n=== All results updated successfully ===")
+    
+    return y_test, y_pred
 
 
 if __name__ == "__main__":

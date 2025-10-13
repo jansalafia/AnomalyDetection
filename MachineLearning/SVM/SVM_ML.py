@@ -89,6 +89,8 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
         pd.DataFrame({"message": ["No poisoned data results yet"]}).to_csv(poisoned_result_csv, index=False)
 
     print("\n=== All SVM results updated successfully ===")
+    
+    return y_test, y_pred
 
 
 if __name__ == "__main__":
