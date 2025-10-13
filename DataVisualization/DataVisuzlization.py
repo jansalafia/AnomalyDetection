@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from dash.dependencies import Output, Input
 
 # === Load Data ===
-df = pd.read_csv("CSVs/ToBeMerged/newDataset.csv")
+df = pd.read_csv("CSVs/newDataset.csv")
 
 # Identify numeric features
 numeric_cols = df.select_dtypes(include=["float64", "int64"]).columns

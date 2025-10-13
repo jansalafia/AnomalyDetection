@@ -6,7 +6,11 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 
-def run_best_model(path: str, param_path: str = "MachineLearning/LogReg/best_params.csv"):
+def run_best_model(
+    path: str, 
+    param_path: str = "MachineLearning/LogReg/best_params.csv", 
+    output_csv: str = "Results/Logistic Regression/results_logreg.csv"
+):
     # Load dataset
     df = pd.read_csv(path)
     y = df["anomaly"]
@@ -38,8 +42,16 @@ def run_best_model(path: str, param_path: str = "MachineLearning/LogReg/best_par
     pipe.fit(X_train, y_train)
     y_pred = pipe.predict(X_test)
 
+    # Print performance
     print("\n=== Test Set Performance ===")
-    print(classification_report(y_test, y_pred))
+    report = classification_report(y_test, y_pred)
+    print(report)
+
+    # Save report to CSV
+    report_dict = classification_report(y_test, y_pred, output_dict=True)
+    report_df = pd.DataFrame(report_dict).transpose()
+    report_df.to_csv(output_csv, index=True)
+    print(f"\nSaved classification report to {output_csv}")
 
 if __name__ == "__main__":
     run_best_model("CSVs/newDataset.csv")
