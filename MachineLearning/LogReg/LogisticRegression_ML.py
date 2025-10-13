@@ -9,7 +9,7 @@ from sklearn.metrics import classification_report
 def run_best_model(
     path: str, 
     param_path: str = "MachineLearning/LogReg/best_params.csv", 
-    output_csv: str = "results_logreg.csv"
+    output_csv: str = "Results/Logistic Regression/results_logreg.csv"
 ):
     # Load dataset
     df = pd.read_csv(path)
