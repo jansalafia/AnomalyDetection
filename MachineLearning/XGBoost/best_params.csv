@@ -1,0 +1,2 @@
+eval_metric,learning_rate,max_depth,min_child_weight,n_estimators,tree_method,random_state,test_size
+logloss,0.05,4,1,400,hist,100,0.8

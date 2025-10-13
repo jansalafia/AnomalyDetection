@@ -1,0 +1,2 @@
+kernel,C,class_weight,gamma,random_state,test_size
+linear,1,,scale,100,0.9

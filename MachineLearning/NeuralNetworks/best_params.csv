@@ -1,0 +1,2 @@
+hidden_layer_sizes,alpha,learning_rate_init,batch_size,activation,solver,learning_rate,max_iter,early_stopping,n_iter_no_change,random_state
+"128,64",0.0001,0.01,64,relu,adam,adaptive,1000,True,20,100

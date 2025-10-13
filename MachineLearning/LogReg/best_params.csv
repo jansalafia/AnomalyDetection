@@ -1,0 +1,2 @@
+clf__C,clf__class_weight,clf__penalty,clf__solver
+10,balanced,l2,liblinear
