@@ -13,10 +13,14 @@ RESULTS_DIR = "Results/NeuralNetworksResults"
 LAST_FILE = os.path.join(RESULTS_DIR, "results_neuralnet.csv")
 BEST_FILE = os.path.join(RESULTS_DIR, "results_neuralnet_best.csv")
 
-# 🧩 Define all poisoning result files here
+# all poisoning result files here
 POISONING_FILES = {
     "2% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_neuralnet_poisoned_2.csv"),
+    "5% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_neuralnet_poisoned_5.csv"),
     "10% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_neuralnet_poisoned_10.csv"),
+    "20% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_neuralnet_poisoned_20.csv"),
+    "25% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_neuralnet_poisoned_25.csv"),
+    "30% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_neuralnet_poisoned_30.csv"),
 }
 
 

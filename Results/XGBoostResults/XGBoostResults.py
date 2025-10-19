@@ -12,7 +12,16 @@ app.title = "Anomaly XGBoost Detection Comparison"
 RESULTS_DIR = "Results/XGBoostResults"
 LAST_FILE = os.path.join(RESULTS_DIR, "results_xgboost.csv")
 BEST_FILE = os.path.join(RESULTS_DIR, "results_xgboost_best.csv")
-POISON_FILE = os.path.join(RESULTS_DIR, "results_xgboost_poisoned.csv")
+
+#Define all poisoning result files here
+POISONING_FILES = {
+    "2% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_xgboost_poisoned_2.csv"),
+    "5% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_xgboost_poisoned_5.csv"),
+    "10% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_xgboost_poisoned_10.csv"),
+    "20% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_xgboost_poisoned_20.csv"),
+    "25% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_xgboost_poisoned_25.csv"),
+    "30% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_xgboost_poisoned_30.csv"),
+}
 
 
 def load_csv(path):
@@ -53,28 +62,40 @@ def update_best(last_df, last_acc, best_df, best_acc):
 
 
 def load_results():
+    """Load all result files, including poisoning variants."""
     last_df, last_acc = load_csv(LAST_FILE)
     best_df, best_acc = load_csv(BEST_FILE)
-    poisoned_df, poisoned_acc = load_csv(POISON_FILE)
 
+    # Update best run
     best_df, best_acc = update_best(last_df, last_acc, best_df, best_acc)
 
-    return {
+    # Base results
+    results = {
         "Last Result": (last_df, last_acc),
         "Best Result": (best_df, best_acc),
-        "Poisoned Data Result": (poisoned_df, poisoned_acc)
     }
 
+    # Load all poisoning results dynamically
+    for attack_name, file_path in POISONING_FILES.items():
+        df, acc = load_csv(file_path)
+        results[attack_name] = (df, acc)
 
+    return results
+
+
+
+# --------- Dash Layout ----------
 app.layout = html.Div([
-    html.H1("XGBoost Detection Results", style={"textAlign": "center"}),
+    html.H1("SVM Detection Results", style={"textAlign": "center"}),
 
-    dcc.Interval(id="interval-refresh", interval=5000, n_intervals=0),
+    dcc.Interval(id="interval-refresh", interval=5 * 1000, n_intervals=0),
 
     html.Div(id="tables-container", style={
         "display": "flex",
+        "flexWrap": "wrap",
+        "justifyContent": "center",
         "gap": "20px",
-        "alignItems": "flex-start"
+        "marginTop": "30px"
     })
 ])
 
