@@ -38,7 +38,7 @@ merged_df = pd.merge(
 # Convert timestamps to datetime
 merged_df["timestamp"] = pd.to_datetime(merged_df["timestamp"])
 
-# ✅ Use the numeric anomaly flag from segments.csv
+# Use the numeric anomaly flag from segments.csv
 merged_df["anomaly"] = merged_df["anomaly"].astype(int)
 
 # Maybe necessary: drop the confusing text label but for now we will keep for reference

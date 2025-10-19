@@ -12,7 +12,12 @@ app.title = "Random Forest Detection Comparison"
 RESULTS_DIR = "Results/RandomForestResults"
 LAST_FILE = os.path.join(RESULTS_DIR, "results_randomforest.csv")
 BEST_FILE = os.path.join(RESULTS_DIR, "results_randomforest_best.csv")
-POISON_FILE = os.path.join(RESULTS_DIR, "results_randomforest_poisoned.csv")
+
+# 🧩 Define all poisoning result files here
+POISONING_FILES = {
+    "2% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_randomforest_poisoned_2.csv"),
+    "10% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_randomforest_poisoned_10.csv"),
+}
 
 
 def load_csv(path):
@@ -32,6 +37,7 @@ def load_csv(path):
 def update_best(last_df, last_acc, best_df, best_acc):
     """Update best results based on last run while preserving accuracy."""
     if best_df.empty or "f1-score" not in best_df.columns:
+        # If best doesn't exist, use last as best
         full_best = last_df.copy()
         best_acc = last_acc
     else:
@@ -53,32 +59,44 @@ def update_best(last_df, last_acc, best_df, best_acc):
 
 
 def load_results():
+    """Load all result files, including poisoning variants."""
     last_df, last_acc = load_csv(LAST_FILE)
     best_df, best_acc = load_csv(BEST_FILE)
-    poisoned_df, poisoned_acc = load_csv(POISON_FILE)
 
+    # Update best run
     best_df, best_acc = update_best(last_df, last_acc, best_df, best_acc)
 
-    return {
+    # Base results
+    results = {
         "Last Result": (last_df, last_acc),
         "Best Result": (best_df, best_acc),
-        "Poisoned Data Result": (poisoned_df, poisoned_acc)
     }
 
+    # Load all poisoning results dynamically
+    for attack_name, file_path in POISONING_FILES.items():
+        df, acc = load_csv(file_path)
+        results[attack_name] = (df, acc)
 
+    return results
+
+
+# --------- Dash Layout ----------
 app.layout = html.Div([
     html.H1("Random Forest Detection Results", style={"textAlign": "center"}),
 
-    dcc.Interval(id="interval-refresh", interval=5000, n_intervals=0),
+    dcc.Interval(id="interval-refresh", interval=5 * 1000, n_intervals=0),
 
     html.Div(id="tables-container", style={
         "display": "flex",
+        "flexWrap": "wrap",
+        "justifyContent": "center",
         "gap": "20px",
-        "alignItems": "flex-start"
+        "marginTop": "30px"
     })
 ])
 
 
+# --------- Callback ----------
 @app.callback(Output("tables-container", "children"),
               Input("interval-refresh", "n_intervals"))
 def refresh_tables(_):
@@ -86,7 +104,6 @@ def refresh_tables(_):
     cards = []
 
     for title, (df, acc) in results.items():
-        # Filter out accuracy row from table display
         display_df = df[df.iloc[:, 0] != "accuracy"].reset_index(drop=True)
 
         accuracy_display = (
@@ -110,9 +127,16 @@ def refresh_tables(_):
             html.H3(title, style={"textAlign": "center", "marginBottom": "10px"}),
             accuracy_display,
             table
-        ], style={"flex": "1", "backgroundColor": "white", "padding": "10px",
-                  "borderRadius": "10px", "boxShadow": "0 2px 8px rgba(0,0,0,0.1)",
-                  "border": "1px solid #ddd"})
+        ], style={
+            "flex": "1",
+            "backgroundColor": "white",
+            "padding": "10px",
+            "borderRadius": "10px",
+            "boxShadow": "0 2px 8px rgba(0,0,0,0.1)",
+            "border": "1px solid #ddd",
+            "minWidth": "350px",
+            "maxWidth": "45%"
+        })
 
         cards.append(card)
 

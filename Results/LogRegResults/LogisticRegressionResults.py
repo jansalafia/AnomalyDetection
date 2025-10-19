@@ -10,7 +10,12 @@ app.title = "Logistic Regression Results Comparison"
 RESULTS_DIR = "Results/LogRegResults"
 LAST_FILE = os.path.join(RESULTS_DIR, "results_logreg.csv")
 BEST_FILE = os.path.join(RESULTS_DIR, "results_logreg_best.csv")
-POISON_FILE = os.path.join(RESULTS_DIR, "results_logreg_poisoned.csv")
+
+# 🧩 Define all poisoning result files here
+POISONING_FILES = {
+    "2% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_logreg_poisoned_2.csv"),
+    "10% Label Flip Poisoning": os.path.join(RESULTS_DIR, "results_logreg_poisoned_10.csv")
+}
 
 
 def load_csv(path):
@@ -30,7 +35,6 @@ def load_csv(path):
 def update_best(last_df, last_acc, best_df, best_acc):
     """Update best results based on last run while preserving accuracy."""
     if best_df.empty or "f1-score" not in best_df.columns:
-        # If best doesn't exist, use last as best
         full_best = last_df.copy()
         best_acc = last_acc
     else:
@@ -39,8 +43,7 @@ def update_best(last_df, last_acc, best_df, best_acc):
             if idx < len(best_df):
                 if last_df.loc[idx, "f1-score"] > best_df.loc[idx, "f1-score"]:
                     full_best.loc[idx] = last_df.loc[idx]
-    # Save best results
-    # Reattach accuracy row at top
+    # Reattach accuracy and save
     if best_acc is not None:
         acc_row = pd.DataFrame([{
             full_best.columns[0]: "accuracy",
@@ -53,28 +56,36 @@ def update_best(last_df, last_acc, best_df, best_acc):
 
 
 def load_results():
+    """Load all result files, including poisoning variants."""
     last_df, last_acc = load_csv(LAST_FILE)
     best_df, best_acc = load_csv(BEST_FILE)
-    poisoned_df, poisoned_acc = load_csv(POISON_FILE)
 
+    # Update the best run
     best_df, best_acc = update_best(last_df, last_acc, best_df, best_acc)
 
-    return {
+    # Base results
+    results = {
         "Last Run": (last_df, last_acc),
         "Best Run": (best_df, best_acc),
-        "Poisoned Data": (poisoned_df, poisoned_acc)
     }
+
+    # Load all poisoning results dynamically
+    for attack_name, file_path in POISONING_FILES.items():
+        df, acc = load_csv(file_path)
+        results[attack_name] = (df, acc)
+
+    return results
 
 
 app.layout = html.Div([
     html.H1("Logistic Regression Results", style={"textAlign": "center"}),
 
-    dcc.Interval(id="interval-refresh", interval=10*1000, n_intervals=0),  # Auto-refresh every 10s
+    dcc.Interval(id="interval-refresh", interval=10 * 1000, n_intervals=0),  # Auto-refresh every 10s
 
     html.Div(id="tables-container", style={
         "display": "flex",
-        "justifyContent": "space-around",
-        "alignItems": "flex-start",
+        "flexWrap": "wrap",
+        "justifyContent": "center",
         "gap": "20px",
         "marginTop": "30px"
     })
@@ -88,7 +99,6 @@ def update_tables(_):
     cards = []
 
     for title, (df, acc) in results.items():
-        # Filter out accuracy row from table display
         display_df = df[df.iloc[:, 0] != "accuracy"].reset_index(drop=True)
 
         accuracy_display = (
@@ -116,13 +126,12 @@ def update_tables(_):
             "borderRadius": "10px",
             "padding": "10px",
             "boxShadow": "0 2px 8px rgba(0,0,0,0.1)",
-            "width": "32%",
+            "width": "45%",
             "backgroundColor": "white"
         })
         cards.append(card)
 
     return cards
-
 
 
 if __name__ == "__main__":
