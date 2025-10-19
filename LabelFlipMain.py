@@ -13,14 +13,14 @@ from MachineLearning.XGBoost.XGBoost_ML import run_best_model as run_xgboost
 
 
 # --- CONFIG ---
-POISONED_CSV = "CSVs/newDataset_poisoned.csv"
+POISONED_CSV = "CSVs/newDataset_poisoned2.csv"
 
 RESULT_PATHS = {
-    "LogReg":       "Results/LogRegResults/results_logreg_poisoned.csv",
-    "NeuralNet":    "Results/NeuralNetworksResults/results_neuralnet_poisoned.csv",
-    "RandomForest": "Results/RandomForestResults/results_randomforest_poisoned.csv",
-    "SVM":          "Results/SVMResults/results_svm_poisoned.csv",
-    "XGBoost":      "Results/XGBoostResults/results_xgboost_poisoned.csv",
+    "LogReg":       "Results/LogRegResults/results_logreg_poisoned2.csv",
+    "NeuralNet":    "Results/NeuralNetworksResults/results_neuralnet_poisoned2.csv",
+    "RandomForest": "Results/RandomForestResults/results_randomforest_poisoned2.csv",
+    "SVM":          "Results/SVMResults/results_svm_poisoned2.csv",
+    "XGBoost":      "Results/XGBoostResults/results_xgboost_poisoned2.csv",
 }
 
 

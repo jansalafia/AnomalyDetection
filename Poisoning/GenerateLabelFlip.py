@@ -8,7 +8,7 @@ import pandas as pd
 ORIG_CSV        = "CSVs/newDataset.csv"
 POISONED_CSV    = "CSVs/newDataset_poisoned.csv"
 LABEL_COL       = "anomaly"
-POISON_FRACTION = 0.05      # 5% of labels flipped
+POISON_FRACTION = 0.30      # % of labels flipped
 RANDOM_STATE    = 100
 
 
