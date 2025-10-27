@@ -1,6 +1,6 @@
-Unnamed: 0,precision,recall,f1-score,support
-accuracy,0.916,,,
+,precision,recall,f1-score,support
 0,0.956,0.938,0.947,1352.0
 1,0.775,0.833,0.803,347.0
+accuracy,0.916,0.916,0.916,0.916
 macro avg,0.866,0.885,0.875,1699.0
 weighted avg,0.919,0.916,0.918,1699.0

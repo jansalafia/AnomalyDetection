@@ -90,10 +90,6 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     update_best_result(report_df, best_result_csv)
 
-    # 10) Placeholder poisoned result file if not existing
-    if not os.path.exists(poisoned_result_csv):
-        pd.DataFrame({"message": ["No poisoned data results yet"]}).to_csv(poisoned_result_csv, index=False)
-
     print("\nNeuralNet — Test Set Performance:")
     print(classification_report(y_test, y_pred))
     print("\n=== All results updated successfully ===")

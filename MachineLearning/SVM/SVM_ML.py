@@ -84,10 +84,6 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     update_best(report_df, best_result_csv)
 
-    # 8) Placeholder poisoned data CSV
-    if not os.path.exists(poisoned_result_csv):
-        pd.DataFrame({"message": ["No poisoned data results yet"]}).to_csv(poisoned_result_csv, index=False)
-
     print("\n=== All SVM results updated successfully ===")
     
     return y_test, y_pred
