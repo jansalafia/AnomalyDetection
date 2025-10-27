@@ -3,7 +3,7 @@ import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_curve, auc
 
 
 def run_best_model(path: str = "CSVs/newDataset.csv",
@@ -17,6 +17,10 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
     last_result_csv = os.path.join(output_dir, "results_randomforest.csv")
     best_result_csv = os.path.join(output_dir, "results_randomforest_best.csv")
     poisoned_result_csv = os.path.join(output_dir, "results_randomforest_poisoned.csv")
+
+    # ROC output files (NEW)
+    roc_data_csv = os.path.join(output_dir, "roc_randomforest_clean.csv")
+    auc_summary_csv = os.path.join(output_dir, "roc_auc_summary.csv")
 
     # 1) Load dataset
     df = pd.read_csv(path)
@@ -81,9 +85,26 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     update_best_result(report_df, best_result_csv)
 
-    print("\n=== All RandomForest results updated successfully ===")
-    
-    return y_test, y_pred
+    # 9) Compute and save ROC data
+    try:
+        # Get probabilities for positive class
+        y_proba = rf.predict_proba(X_test)[:, 1]
+        fpr, tpr, _ = roc_curve(y_test, y_proba)
+        roc_auc = auc(fpr, tpr)
+
+        # Save ROC curve data
+        roc_df = pd.DataFrame({"fpr": fpr, "tpr": tpr})
+        roc_df.to_csv(roc_data_csv, index=False)
+        print(f"Saved ROC data to {roc_data_csv} (AUC = {roc_auc:.3f})")
+
+        # Save AUC summary
+        pd.DataFrame([{"dataset": "clean", "auc": roc_auc}]).to_csv(auc_summary_csv, index=False)
+    except Exception as e:
+        print(f"[Warning] ROC data could not be generated: {e}")
+
+    print("\n=== All RandomForest results and ROC data updated successfully ===")
+
+    return y_test, y_pred, y_proba if "y_proba" in locals() else None
 
 
 if __name__ == "__main__":

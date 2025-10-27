@@ -5,7 +5,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, roc_curve, auc
+
 
 def run_best_model(path: str = "CSVs/newDataset.csv",
                    param_path: str = "MachineLearning/SVM/best_params.csv",
@@ -17,6 +18,10 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
     last_result_csv = os.path.join(output_dir, "results_svm.csv")
     best_result_csv = os.path.join(output_dir, "results_svm_best.csv")
     poisoned_result_csv = os.path.join(output_dir, "results_svm_poisoned.csv")
+
+    # ROC data files (NEW)
+    roc_data_csv = os.path.join(output_dir, "roc_svm_clean.csv")
+    auc_summary_csv = os.path.join(output_dir, "roc_auc_summary.csv")
 
     # 1) Load dataset
     df = pd.read_csv(path)
@@ -49,7 +54,7 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
             C=C,
             class_weight=class_weight,
             gamma=gamma,
-            probability=True,
+            probability=True,  # Needed for ROC curves
             random_state=random_state
         ))
     ])
@@ -84,9 +89,25 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     update_best(report_df, best_result_csv)
 
-    print("\n=== All SVM results updated successfully ===")
-    
-    return y_test, y_pred
+    # 8) Compute and save ROC data
+    try:
+        y_proba = pipe.predict_proba(X_test)[:, 1]
+        fpr, tpr, _ = roc_curve(y_test, y_proba)
+        roc_auc = auc(fpr, tpr)
+
+        # Save ROC data
+        roc_df = pd.DataFrame({"fpr": fpr, "tpr": tpr})
+        roc_df.to_csv(roc_data_csv, index=False)
+        print(f"Saved ROC data to {roc_data_csv} (AUC = {roc_auc:.3f})")
+
+        # Save AUC summary
+        pd.DataFrame([{"dataset": "clean", "auc": roc_auc}]).to_csv(auc_summary_csv, index=False)
+    except Exception as e:
+        print(f"[Warning] ROC data could not be generated: {e}")
+
+    print("\n=== All SVM results and ROC data updated successfully ===")
+
+    return y_test, y_pred, y_proba if "y_proba" in locals() else None
 
 
 if __name__ == "__main__":
