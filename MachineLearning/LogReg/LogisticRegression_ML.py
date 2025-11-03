@@ -4,7 +4,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, roc_curve, auc
+from sklearn.metrics import (
+    classification_report,
+    roc_curve,
+    auc,
+    confusion_matrix,
+)
 import numpy as np
 
 
@@ -18,10 +23,8 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     last_result_csv = os.path.join(output_dir, "results_logreg.csv")
     best_result_csv = os.path.join(output_dir, "results_logreg_best.csv")
-    poisoned_result_csv = os.path.join(output_dir, "results_logreg_poisoned.csv")
-
-    # ROC output file (new)
     roc_data_csv = os.path.join(output_dir, "roc_logreg_clean.csv")
+    summary_csv = os.path.join(output_dir, "logreg_summary.csv")
 
     # 1) Load dataset
     df = pd.read_csv(path)
@@ -79,30 +82,52 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     update_best_result(report_df, best_result_csv)
 
-    # 9) Compute and save ROC data
+    # 9) Compute ROC and AUC
     if hasattr(pipe.named_steps["clf"], "predict_proba"):
         y_proba = pipe.predict_proba(X_test)[:, 1]
     else:
-        # fallback for models without predict_proba (e.g. SVM with linear kernel)
         y_proba = pipe.decision_function(X_test)
 
     fpr, tpr, _ = roc_curve(y_test, y_proba)
     roc_auc = auc(fpr, tpr)
 
-    # Save FPR, TPR, AUC as CSV for dashboard use
+    # Save ROC curve data
     roc_df = pd.DataFrame({"fpr": fpr, "tpr": tpr})
     roc_df.to_csv(roc_data_csv, index=False)
     print(f"Saved ROC data to {roc_data_csv} (AUC = {roc_auc:.3f})")
 
-    # Optionally save AUC to metrics summary (for dashboard summary)
-    auc_summary_path = os.path.join(output_dir, "roc_auc_summary.csv")
-    pd.DataFrame([{"dataset": "clean", "auc": roc_auc}]).to_csv(auc_summary_path, index=False)
+    # 10) Confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    cm_df = pd.DataFrame(cm, columns=["Pred 0", "Pred 1"], index=["True 0", "True 1"])
 
-    # 10) Print test set performance
-    print("\nLogisticRegression — Test Set Performance:")
+    # 11) Combined summary (AUC + confusion matrix + main metrics)
+    summary_data = {
+        "dataset": ["clean"],
+        "auc": [roc_auc],
+        "accuracy": [report_dict["accuracy"]],
+        "precision_0": [report_dict["0"]["precision"]],
+        "recall_0": [report_dict["0"]["recall"]],
+        "f1_0": [report_dict["0"]["f1-score"]],
+        "precision_1": [report_dict["1"]["precision"]],
+        "recall_1": [report_dict["1"]["recall"]],
+        "f1_1": [report_dict["1"]["f1-score"]],
+        "tp": [tp],
+        "fp": [fp],
+        "tn": [tn],
+        "fn": [fn],
+    }
+    summary_df = pd.DataFrame(summary_data)
+    summary_df.to_csv(summary_csv, index=False)
+    print(f"Saved summary (AUC + Confusion Matrix) to {summary_csv}")
+
+    # 12) Print overview
+    print("\n=== Test Set Classification Report ===")
     print(classification_report(y_test, y_pred))
-    print("\n=== All results and ROC data updated successfully ===")
-    
+    print("\nConfusion Matrix:\n", cm_df)
+    print(f"\nAUC: {roc_auc:.3f}")
+    print("\n=== All results and summaries saved successfully ===")
+
     return y_test, y_pred, y_proba
 
 

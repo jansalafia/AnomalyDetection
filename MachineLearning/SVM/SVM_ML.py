@@ -1,48 +1,49 @@
-# SVM_Run.py
 import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-from sklearn.metrics import classification_report, roc_curve, auc
+from sklearn.metrics import (
+    classification_report,
+    roc_curve,
+    auc,
+    confusion_matrix,
+)
+import numpy as np
 
 
 def run_best_model(path: str = "CSVs/newDataset.csv",
                    param_path: str = "MachineLearning/SVM/best_params.csv",
-                   output_dir: str = "Results/SVMResults"):
+                   output_dir: str = "Results/SVMResults",
+                   random_state: int = 100,
+                   test_size: float = 0.30):
     # Ensure output directory exists
     os.makedirs(output_dir, exist_ok=True)
 
-    # Output CSV paths
     last_result_csv = os.path.join(output_dir, "results_svm.csv")
     best_result_csv = os.path.join(output_dir, "results_svm_best.csv")
-    poisoned_result_csv = os.path.join(output_dir, "results_svm_poisoned.csv")
-
-    # ROC data files (NEW)
     roc_data_csv = os.path.join(output_dir, "roc_svm_clean.csv")
-    auc_summary_csv = os.path.join(output_dir, "roc_auc_summary.csv")
+    summary_csv = os.path.join(output_dir, "svm_summary.csv")
 
     # 1) Load dataset
     df = pd.read_csv(path)
-
-    # 2) Prepare features & labels
     y = df["anomaly"]
     X = df.drop(columns=["anomaly", "timestamp", "channel", "label"], errors="ignore")
 
-    # 3) Read best params and split data consistently
+    # 2) Load best parameters
     p = pd.read_csv(param_path).iloc[0].to_dict()
-    random_state = int(p.get("random_state", 100))
-    test_size = float(p.get("test_size", 0.30))
+    random_state = int(p.get("random_state", random_state))
+    test_size = float(p.get("test_size", test_size))
 
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=test_size, stratify=y, random_state=random_state
     )
 
-    # 4) Build optimized pipeline
-    kernel = str(p["kernel"])
-    C = float(p["C"])
-    class_weight = None if str(p["class_weight"]) in ("None", "nan") else str(p["class_weight"])
+    # 3) Build optimized SVM pipeline
+    kernel = str(p.get("kernel", "rbf"))
+    C = float(p.get("C", 1.0))
+    class_weight = None if str(p.get("class_weight", "None")) in ("None", "nan") else str(p.get("class_weight"))
     gamma = p.get("gamma", "scale")
     if kernel == "linear":
         gamma = "auto"
@@ -59,37 +60,37 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
         ))
     ])
 
-    # 5) Fit model & evaluate
+    # 4) Fit & predict
     pipe.fit(X_train, y_train)
     y_pred = pipe.predict(X_test)
 
-    print("\nSVM — Test Set Performance:")
-    print(classification_report(y_test, y_pred))
-
-    # 6) Save report to CSV
+    # 5) Classification report
     report_dict = classification_report(y_test, y_pred, output_dict=True)
     report_df = pd.DataFrame(report_dict).transpose().round(3)
-    report_df.to_csv(last_result_csv, index=True)
-    print(f"Saved last SVM results to {last_result_csv}")
 
-    # 7) Compare and update best result
-    def update_best(last_df, best_path):
+    # Save current run
+    report_df.to_csv(last_result_csv, index=True)
+    print(f"\nSaved last run results to {last_result_csv}")
+
+    # 6) Update best result if improved
+    def update_best_result(last_df, best_path):
         if os.path.exists(best_path):
             best_df = pd.read_csv(best_path)
             if "f1-score" in best_df.columns:
                 last_mean = last_df["f1-score"].mean()
                 best_mean = best_df["f1-score"].mean()
                 if last_mean > best_mean:
-                    print(f"New best SVM model found! (F1 {last_mean:.3f} > {best_mean:.3f})")
+                    print(f"New best model found! (F1 {last_mean:.3f} > {best_mean:.3f})")
                     last_df.to_csv(best_path, index=True)
             else:
                 last_df.to_csv(best_path, index=True)
         else:
             last_df.to_csv(best_path, index=True)
 
-    update_best(report_df, best_result_csv)
+    update_best_result(report_df, best_result_csv)
 
-    # 8) Compute and save ROC data
+    # 7) Compute ROC and AUC
+    y_proba = None
     try:
         y_proba = pipe.predict_proba(X_test)[:, 1]
         fpr, tpr, _ = roc_curve(y_test, y_proba)
@@ -99,15 +100,43 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
         roc_df = pd.DataFrame({"fpr": fpr, "tpr": tpr})
         roc_df.to_csv(roc_data_csv, index=False)
         print(f"Saved ROC data to {roc_data_csv} (AUC = {roc_auc:.3f})")
-
-        # Save AUC summary
-        pd.DataFrame([{"dataset": "clean", "auc": roc_auc}]).to_csv(auc_summary_csv, index=False)
     except Exception as e:
         print(f"[Warning] ROC data could not be generated: {e}")
+        roc_auc = np.nan
 
-    print("\n=== All SVM results and ROC data updated successfully ===")
+    # 8) Confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    tn, fp, fn, tp = cm.ravel()
+    cm_df = pd.DataFrame(cm, columns=["Pred 0", "Pred 1"], index=["True 0", "True 1"])
 
-    return y_test, y_pred, y_proba if "y_proba" in locals() else None
+    # 9) Combined summary
+    summary_data = {
+        "dataset": ["clean"],
+        "auc": [roc_auc],
+        "accuracy": [report_dict["accuracy"]],
+        "precision_0": [report_dict["0"]["precision"]],
+        "recall_0": [report_dict["0"]["recall"]],
+        "f1_0": [report_dict["0"]["f1-score"]],
+        "precision_1": [report_dict["1"]["precision"]],
+        "recall_1": [report_dict["1"]["recall"]],
+        "f1_1": [report_dict["1"]["f1-score"]],
+        "tp": [tp],
+        "fp": [fp],
+        "tn": [tn],
+        "fn": [fn],
+    }
+    summary_df = pd.DataFrame(summary_data)
+    summary_df.to_csv(summary_csv, index=False)
+    print(f"Saved summary (AUC + Confusion Matrix) to {summary_csv}")
+
+    # 10) Print results
+    print("\n=== SVM Test Set Report ===")
+    print(classification_report(y_test, y_pred))
+    print("\nConfusion Matrix:\n", cm_df)
+    print(f"\nAUC: {roc_auc:.3f}")
+    print("\n=== All results and summaries saved successfully ===")
+
+    return y_test, y_pred, y_proba
 
 
 if __name__ == "__main__":
