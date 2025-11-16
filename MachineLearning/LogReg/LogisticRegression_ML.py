@@ -67,18 +67,28 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
 
     # 8) Update best run
     def update_best_result(last_df, best_path):
+        def mean_f1(df):
+            if "f1-score" not in df.columns:
+                return None
+            # Convert to numeric; any junk becomes NaN and is ignored in the mean
+            return pd.to_numeric(df["f1-score"], errors="coerce").mean()
+    
         if os.path.exists(best_path):
             best_df = pd.read_csv(best_path)
-            if "f1-score" in best_df.columns:
-                last_mean = last_df["f1-score"].mean()
-                best_mean = best_df["f1-score"].mean()
+    
+            last_mean = mean_f1(last_df)
+            best_mean = mean_f1(best_df)
+    
+            # If we cannot compute a mean for the old file, just overwrite it
+            if best_mean is None or pd.isna(best_mean):
+                last_df.to_csv(best_path, index=True)
+            else:
                 if last_mean > best_mean:
                     print(f"New best model found! (F1 {last_mean:.3f} > {best_mean:.3f})")
                     last_df.to_csv(best_path, index=True)
-            else:
-                last_df.to_csv(best_path, index=True)
         else:
             last_df.to_csv(best_path, index=True)
+
 
     update_best_result(report_df, best_result_csv)
 
