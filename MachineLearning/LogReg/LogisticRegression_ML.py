@@ -138,7 +138,7 @@ def run_best_model(path: str = "CSVs/newDataset.csv",
     print(f"\nAUC: {roc_auc:.3f}")
     print("\n=== All results and summaries saved successfully ===")
 
-    return y_test, y_pred, y_proba
+    return pipe, X_test, y_test
 
 
 if __name__ == "__main__":
