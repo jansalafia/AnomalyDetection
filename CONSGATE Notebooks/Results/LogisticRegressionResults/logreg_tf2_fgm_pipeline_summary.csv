@@ -1,0 +1,7 @@
+model_eval,acc,f1
+clean_model_on_clean_test,0.7952941176470588,0.0
+clean_model_on_adv_test,0.5435294117647059,0.3782051282051282
+clean_model_on_combined_test,0.6694117647058824,0.2957393483709273
+adv_trained_model_on_clean_test,0.7952941176470588,0.0
+adv_trained_model_on_adv_test,0.7952941176470588,0.0
+adv_trained_model_on_combined_test,0.7952941176470588,0.0
