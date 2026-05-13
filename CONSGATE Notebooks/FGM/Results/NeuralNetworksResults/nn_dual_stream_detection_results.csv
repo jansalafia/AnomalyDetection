@@ -1,0 +1,2 @@
+attack,confidence_threshold,disagreement_threshold,FPR,TPR,F1,clean_model_acc_on_adv,guardian_model_acc_on_clean,guardian_model_acc_on_adv
+FGM,0.6,0.55,0.03218210361067504,0.8877551020408163,0.9247751430907605,0.13971742543171115,0.9466248037676609,0.9395604395604396
