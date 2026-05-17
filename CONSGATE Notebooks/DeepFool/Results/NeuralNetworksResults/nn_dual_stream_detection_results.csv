@@ -1,0 +1,2 @@
+attack,confidence_threshold,disagreement_threshold,FPR,TPR,F1,clean_model_acc_on_adv,guardian_model_acc_on_clean,guardian_model_acc_on_adv
+DeepFool,0.6,0.55,0.09811616954474098,0.18681318681318682,0.2907758094074527,0.1389324960753532,0.9034536891679749,0.28649921507064363

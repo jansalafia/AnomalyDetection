@@ -1,0 +1,4 @@
+model_eval,acc,f1
+dual_stream_final_predictions_on_clean_test,0.9034536891679749,0.7897435897435897
+dual_stream_final_predictions_on_adv_test,0.28649921507064363,0.3493199713672155
+dual_stream_final_predictions_on_combined_test,0.5949764521193093,0.479313824419778
