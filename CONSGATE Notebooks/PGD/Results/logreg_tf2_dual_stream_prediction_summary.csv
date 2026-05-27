@@ -1,0 +1,4 @@
+test_set,total_samples,flagged_as_attack,pct_flagged
+clean,425,13,3.0588235294117645
+adv,425,0,0.0
+combined,850,13,1.5294117647058822

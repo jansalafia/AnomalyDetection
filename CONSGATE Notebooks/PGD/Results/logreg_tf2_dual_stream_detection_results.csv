@@ -1,0 +1,4 @@
+metric,value
+clean_test_false_positive_rate,0.03058823529411765
+adv_test_true_positive_rate,0.0
+combined_test_flag_rate,0.015294117647058824
